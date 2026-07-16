@@ -4,6 +4,8 @@ import com.BorderLineSystem.BorderLine.dto.LoginRequest;
 import com.BorderLineSystem.BorderLine.dto.RegisterRequest;
 import com.BorderLineSystem.BorderLine.entity.Role;
 import com.BorderLineSystem.BorderLine.entity.User;
+import com.BorderLineSystem.BorderLine.exception.BadRequestException;
+import com.BorderLineSystem.BorderLine.exception.ResourceNotFoundException;
 import com.BorderLineSystem.BorderLine.repository.RoleRepository;
 import com.BorderLineSystem.BorderLine.repository.UserRepository;
 import com.BorderLineSystem.BorderLine.security.JwtUtils;
@@ -43,7 +45,7 @@ public class AuthService {
         // Check if email already exists
         if (userRepository.existsByEmail(request.getEmail())) {
             logger.warn("Registration failed - Email already exists: {}", request.getEmail());
-            throw new RuntimeException("Email already registered");
+            throw new BadRequestException("Email already registered");
         }
 
         // Create new user
@@ -59,7 +61,7 @@ public class AuthService {
         Role defaultRole = roleRepository.findByName("OFFICER")
                 .orElseThrow(() -> {
                     logger.error("OFFICER role not found in database");
-                    return new RuntimeException("Default role not found");
+                    return new ResourceNotFoundException("Default role not found");
                 });
 
         user.addRole(defaultRole);
@@ -72,23 +74,23 @@ public class AuthService {
     public String login(LoginRequest request) {
         logger.info("Login attempt for email: {}", request.getEmail());
 
-        // Find user by email
+        // Find user by email - same error for wrong email/password
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> {
-                    logger.warn("Login failed - User not found: {}", request.getEmail());
-                    return new RuntimeException("Invalid credentials");
+                    logger.warn("Login failed - Invalid credentials: {}", request.getEmail());
+                    return new BadRequestException("Invalid credentials");
                 });
 
         // Check if user is active
         if (!user.getActive()) {
             logger.warn("Login failed - Inactive account: {}", request.getEmail());
-            throw new RuntimeException("Account is inactive. Please contact support.");
+            throw new BadRequestException("Account is inactive. Please contact support.");
         }
 
-        // Verify password
+        // Verify password - same error for wrong password
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            logger.warn("Login failed - Invalid password for user: {}", request.getEmail());
-            throw new RuntimeException("Invalid credentials");
+            logger.warn("Login failed - Invalid credentials: {}", request.getEmail());
+            throw new BadRequestException("Invalid credentials");
         }
 
         // Generate JWT token
@@ -102,7 +104,7 @@ public class AuthService {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> {
                     logger.error("User not found with email: {}", email);
-                    return new RuntimeException("User not found");
+                    return new ResourceNotFoundException("User not found");
                 });
     }
 
