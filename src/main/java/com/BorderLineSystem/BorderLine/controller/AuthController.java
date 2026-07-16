@@ -4,6 +4,7 @@ import com.BorderLineSystem.BorderLine.dto.AuthResponse;
 import com.BorderLineSystem.BorderLine.dto.LoginRequest;
 import com.BorderLineSystem.BorderLine.dto.RegisterRequest;
 import com.BorderLineSystem.BorderLine.entity.User;
+import com.BorderLineSystem.BorderLine.exception.BadRequestException;
 import com.BorderLineSystem.BorderLine.service.AuthService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -30,56 +31,34 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<Map<String, String>> register(@Valid @RequestBody RegisterRequest request) {
         logger.info("Received registration request for email: {}", request.getEmail());
 
-        try {
-            authService.register(request);
+        authService.register(request);
 
-            Map<String, String> response = new HashMap<>();
-            response.put("status", "success");
-            response.put("message", "User registered successfully");
+        Map<String, String> response = new HashMap<>();
+        response.put("status", "success");
+        response.put("message", "User registered successfully");
 
-            logger.info("Registration successful for: {}", request.getEmail());
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-
-        } catch (RuntimeException e) {
-            logger.error("Registration failed: {}", e.getMessage());
-
-            Map<String, String> errorResponse = new HashMap<>();
-            errorResponse.put("status", "error");
-            errorResponse.put("message", e.getMessage());
-
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-        }
+        logger.info("Registration successful for: {}", request.getEmail());
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         logger.info("Received login request for email: {}", request.getEmail());
 
-        try {
-            String token = authService.login(request);
-            User user = authService.getUserByEmail(request.getEmail());
+        String token = authService.login(request);
+        User user = authService.getUserByEmail(request.getEmail());
 
-            AuthResponse response = new AuthResponse(
-                    token,
-                    user.getEmail(),
-                    user.getName(),
-                    authService.getUserRoles(user.getEmail())
-            );
+        AuthResponse response = new AuthResponse(
+                token,
+                user.getEmail(),
+                user.getName(),
+                authService.getUserRoles(user.getEmail())
+        );
 
-            logger.info("Login successful for: {}", request.getEmail());
-            return ResponseEntity.ok(response);
-
-        } catch (RuntimeException e) {
-            logger.warn("Login failed for {}: {}", request.getEmail(), e.getMessage());
-
-            Map<String, String> errorResponse = new HashMap<>();
-            errorResponse.put("status", "error");
-            errorResponse.put("message", e.getMessage());
-
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-        }
+        logger.info("Login successful for: {}", request.getEmail());
+        return ResponseEntity.ok(response);
     }
 }
