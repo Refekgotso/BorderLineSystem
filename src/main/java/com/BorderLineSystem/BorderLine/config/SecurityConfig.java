@@ -1,9 +1,12 @@
 package com.BorderLineSystem.BorderLine.config;
 
 import com.BorderLineSystem.BorderLine.security.JwtAuthenticationFilter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -16,54 +19,41 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
-        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints (no token needed)
-                        .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/menu/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/reviews/**").permitAll()
+                        // ===== PUBLICLY ACCESSIBLE ENDPOINTS =====
+                        // Authentication endpoints
+                        .requestMatchers("/api/auth/login").permitAll()
+                        .requestMatchers("/api/auth/register/immigrant").permitAll()
+                        .requestMatchers("/api/auth/refresh-token").permitAll()
 
-                        // ADMIN only endpoints
-                        .requestMatchers(HttpMethod.POST, "/api/categories/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/categories/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/categories/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/menu/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/menu/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/menu/**").hasRole("ADMIN")
+                        // ===== SWAGGER UI (FULLY PUBLIC) =====
+                        .requestMatchers("/swagger-ui/**").permitAll()
+                        .requestMatchers("/swagger-ui.html").permitAll()
+                        .requestMatchers("/api-docs/**").permitAll()
+                        .requestMatchers("/v3/api-docs/**").permitAll()
+                        .requestMatchers("/webjars/**").permitAll()
+                        .requestMatchers("/swagger-resources/**").permitAll()
 
-                        // OFFICER endpoints (can create/read immigrants and crossings)
-                        .requestMatchers(HttpMethod.POST, "/api/immigrants/**").hasAnyRole("ADMIN", "OFFICER")
-                        .requestMatchers(HttpMethod.PUT, "/api/immigrants/**").hasAnyRole("ADMIN", "OFFICER")
-                        .requestMatchers(HttpMethod.GET, "/api/immigrants/**").hasAnyRole("ADMIN", "OFFICER", "VIEWER")
-                        .requestMatchers(HttpMethod.POST, "/api/crossings/**").hasAnyRole("ADMIN", "OFFICER")
-                        .requestMatchers(HttpMethod.GET, "/api/crossings/**").hasAnyRole("ADMIN", "OFFICER", "VIEWER")
+                        // ===== ACTUATOR (Optional) =====
+                        .requestMatchers("/actuator/health").permitAll()
 
-                        // VIEWER only read access
-                        .requestMatchers(HttpMethod.GET, "/api/reports/**").hasAnyRole("ADMIN", "OFFICER", "VIEWER")
-
-                        // All other endpoints require authentication
+                        // ===== ALL OTHER ENDPOINTS REQUIRE AUTHENTICATION =====
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
@@ -74,13 +64,24 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:5173", "http://localhost:8080"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept"));
         configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
     }
 }
