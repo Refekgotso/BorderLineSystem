@@ -1,4 +1,4 @@
-package com.borderlines.util;
+package com.BorderLineSystem.BorderLine.util;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
