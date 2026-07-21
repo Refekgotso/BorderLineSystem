@@ -1,17 +1,21 @@
 package com.BorderLineSystem.BorderLine.config;
 
+import com.BorderLineSystem.BorderLine.entity.BorderCrossing;
 import com.BorderLineSystem.BorderLine.entity.Immigrant;
+import com.BorderLineSystem.BorderLine.repository.BorderCrossingRepository;
 import com.BorderLineSystem.BorderLine.repository.ImmigrantRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Configuration
 public class DataSeeder {
 
     @Bean
-    CommandLineRunner seedData(ImmigrantRepository immigrantRepository) {
+    CommandLineRunner seedData(ImmigrantRepository immigrantRepository,
+                               BorderCrossingRepository borderCrossingRepository) {
         return args -> {
             if (immigrantRepository.count() == 0) {
                 Immigrant i1 = new Immigrant();
@@ -37,6 +41,36 @@ public class DataSeeder {
                 i3.setDateOfBirth(LocalDate.of(2000, 1, 20));
                 i3.setGender("Female");
                 immigrantRepository.save(i3);
+
+                if (borderCrossingRepository.count() == 0) {
+                    BorderCrossing c1 = new BorderCrossing();
+                    c1.setImmigrant(i1);
+                    c1.setBorderPost("Beitbridge");
+                    c1.setEntry(true);
+                    c1.setCrossingTime(LocalDateTime.of(2026, 6, 1, 8, 30));
+                    borderCrossingRepository.save(c1);
+
+                    BorderCrossing c2 = new BorderCrossing();
+                    c2.setImmigrant(i1);
+                    c2.setBorderPost("Beitbridge");
+                    c2.setEntry(false);
+                    c2.setCrossingTime(LocalDateTime.of(2026, 6, 20, 15, 45));
+                    borderCrossingRepository.save(c2);
+
+                    BorderCrossing c3 = new BorderCrossing();
+                    c3.setImmigrant(i2);
+                    c3.setBorderPost("Lebombo");
+                    c3.setEntry(true);
+                    c3.setCrossingTime(LocalDateTime.of(2026, 7, 5, 10, 0));
+                    borderCrossingRepository.save(c3);
+
+                    BorderCrossing c4 = new BorderCrossing();
+                    c4.setImmigrant(i3);
+                    c4.setBorderPost("Kopfontein");
+                    c4.setEntry(true);
+                    c4.setCrossingTime(LocalDateTime.of(2026, 7, 10, 12, 15));
+                    borderCrossingRepository.save(c4);
+                }
             }
         };
     }
