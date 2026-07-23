@@ -1,3 +1,14 @@
+package com.borderlines.model;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 package com.BorderLineSystem.BorderLine.entity;
 
 import jakarta.persistence.*;
@@ -46,6 +57,15 @@ public class Visa {
     private Long id;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private VisaType type;
+
+    @Column(nullable = false)
+    private Integer durationDays;
+
+    @Column(nullable = false)
+    private LocalDate issueDate;
+
     private VisaType type;
 
     private Integer durationDays;
@@ -79,6 +99,27 @@ public class Visa {
     @JoinColumn(name = "immigrant_id", nullable = false)
     private Immigrant immigrant;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private VisaStatus status = VisaStatus.ACTIVE;
+
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+
+    public enum VisaType {
+        BUSINESS,
+        VACATION,
+        STUDY,
+        TRANSIT,
+        WORK
+    }
+
+    public enum VisaStatus {
+        ACTIVE,
+        EXPIRED,
+        CANCELLED
+    }
+}
     public enum VisaType {
         BUSINESS,
         VACATION,
