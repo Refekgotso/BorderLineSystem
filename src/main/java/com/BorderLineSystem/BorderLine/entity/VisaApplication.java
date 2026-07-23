@@ -1,16 +1,11 @@
 package com.BorderLineSystem.BorderLine.entity;
 
-import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
-@Entity
-@Table(name = "border_crossings")
-@Getter
-@Setter
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -18,53 +13,48 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
 /**
- * A single recorded entry or exit event for an immigrant at a border post.
+ * Tracks a visa application before it is approved/rejected and turned into
+ * an actual {@link Visa}.
  */
 @Entity
-@Table(name = "border_crossings")
+@Table(name = "visa_applications")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class BorderCrossing {
+public class VisaApplication {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private LocalDateTime crossingTime;
-
-    private boolean entry; // true = entry, false = exit
-
-    private String borderPost;
-
-    @ManyToOne
-    @JoinColumn(name = "immigrant_id")
-    private Immigrant immigrant;
-}
-    @NotNull(message = "Crossing time is required")
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private LocalDateTime crossingTime;
+    private Visa.VisaType requestedVisaType;
 
-    /** true = entry into South Africa, false = exit from South Africa. */
+    @NotNull(message = "Submission date is required")
     @Column(nullable = false)
-    private boolean entryOrExit;
+    private LocalDate submissionDate;
 
-    @NotBlank(message = "Border post is required")
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String borderPost;
+    @Builder.Default
+    private Status status = Status.PENDING;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "immigrant_id", nullable = false)
     private Immigrant immigrant;
+
+    public enum Status {
+        PENDING,
+        APPROVED,
+        REJECTED
+    }
 }
