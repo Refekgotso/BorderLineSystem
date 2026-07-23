@@ -1,5 +1,14 @@
 package com.BorderLineSystem.BorderLine.entity;
 
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+import java.time.LocalDate;
+
+@Entity
+@Table(name = "visas")
+@Getter
+@Setter
 import java.time.LocalDate;
 
 import jakarta.persistence.Column;
@@ -37,6 +46,20 @@ public class Visa {
     private Long id;
 
     @Enumerated(EnumType.STRING)
+    private VisaType type;
+
+    private Integer durationDays;
+    private LocalDate issueDate;
+    private LocalDate expiryDate;
+
+    @ManyToOne
+    @JoinColumn(name = "immigrant_id")
+    private Immigrant immigrant;
+
+    public enum VisaType {
+        BUSINESS, VACATION, STUDY
+    }
+}
     @Column(nullable = false)
     private VisaType type;
 

@@ -1,5 +1,14 @@
 package com.BorderLineSystem.BorderLine.entity;
 
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "border_crossings")
+@Getter
+@Setter
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -33,6 +42,16 @@ public class BorderCrossing {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private LocalDateTime crossingTime;
+
+    private boolean entry; // true = entry, false = exit
+
+    private String borderPost;
+
+    @ManyToOne
+    @JoinColumn(name = "immigrant_id")
+    private Immigrant immigrant;
+}
     @NotNull(message = "Crossing time is required")
     @Column(nullable = false)
     private LocalDateTime crossingTime;
