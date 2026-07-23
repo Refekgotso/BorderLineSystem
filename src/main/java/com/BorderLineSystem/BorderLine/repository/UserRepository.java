@@ -1,5 +1,17 @@
 package com.BorderLineSystem.BorderLine.repository;
 
+import java.util.Optional;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.BorderLineSystem.BorderLine.entity.User;
+
+public interface UserRepository extends JpaRepository<User, Long> {
+
+    Optional<User> findByUsername(String username);
+
+    boolean existsByUsername(String username);
+}
 import com.BorderLineSystem.BorderLine.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
